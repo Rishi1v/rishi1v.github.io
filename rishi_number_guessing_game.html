@@ -1,0 +1,202 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #game { font-family: var(--font-sans); padding: 2rem 1rem; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 2rem; }
+  .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 2rem; }
+  .diff-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 14px 8px; cursor: pointer; text-align: center; transition: background 0.15s, border-color 0.15s; }
+  .diff-btn:hover { background: var(--color-background-secondary); }
+  .diff-btn.selected { border: 2px solid #1D9E75; }
+  .diff-label { font-size: 14px; font-weight: 500; color: var(--color-text-primary); display: block; }
+  .diff-attempts { font-size: 12px; color: var(--color-text-secondary); display: block; margin-top: 2px; }
+  .start-btn { width: 100%; padding: 12px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 15px; font-weight: 500; color: var(--color-text-primary); cursor: pointer; margin-bottom: 2rem; }
+  .start-btn:hover { background: var(--color-background-secondary); }
+  #game-area { display: none; }
+  .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .attempts-left { font-size: 13px; color: var(--color-text-secondary); }
+  .attempts-num { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .session-badge { font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); padding: 4px 10px; border-radius: 99px; border: 0.5px solid var(--color-border-tertiary); }
+  .input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .input-row input { flex: 1; padding: 10px 14px; font-size: 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); }
+  .input-row input:focus { outline: none; border-color: #1D9E75; box-shadow: 0 0 0 2px rgba(29,158,117,0.15); }
+  .guess-btn { padding: 10px 20px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 15px; font-weight: 500; color: var(--color-text-primary); cursor: pointer; white-space: nowrap; }
+  .guess-btn:hover { background: var(--color-background-secondary); }
+  #feedback { min-height: 28px; margin-bottom: 1rem; }
+  .feedback-line { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .feedback-line.hot { color: #0F6E56; }
+  .feedback-line.warm { color: #3B6D11; }
+  .feedback-line.cold { color: var(--color-text-secondary); }
+  .history { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.5rem; min-height: 30px; }
+  .guess-pill { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); background: var(--color-background-secondary); }
+  .guess-pill.low { border-color: #5DCAA5; color: #0F6E56; }
+  .guess-pill.high { border-color: #F0997B; color: #993C1D; }
+  #result-area { display: none; text-align: center; padding: 1.5rem 0; }
+  .result-title { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+  .result-sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+  .accuracy-bar-wrap { background: var(--color-background-secondary); border-radius: 99px; height: 6px; margin-bottom: 1.5rem; overflow: hidden; }
+  .accuracy-bar { height: 6px; border-radius: 99px; background: #1D9E75; transition: width 0.6s ease; }
+  .play-again-btn { padding: 10px 28px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; color: var(--color-text-primary); cursor: pointer; }
+  .play-again-btn:hover { background: var(--color-background-secondary); }
+  .divider { height: 0.5px; background: var(--color-border-tertiary); margin: 1.5rem 0; }
+</style>
+
+<div id="game">
+  <h1>Number guessing challenge</h1>
+  <p class="sub">Made by Rishi Vatish</p>
+
+  <div id="setup-area">
+    <div class="diff-grid">
+      <div class="diff-btn selected" data-diff="1" onclick="selectDiff(this)">
+        <span class="diff-label">Easy</span>
+        <span class="diff-attempts">10 attempts</span>
+      </div>
+      <div class="diff-btn" data-diff="2" onclick="selectDiff(this)">
+        <span class="diff-label">Medium</span>
+        <span class="diff-attempts">7 attempts</span>
+      </div>
+      <div class="diff-btn" data-diff="3" onclick="selectDiff(this)">
+        <span class="diff-label">Hard</span>
+        <span class="diff-attempts">5 attempts</span>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Start game</button>
+  </div>
+
+  <div id="game-area">
+    <div class="status-row">
+      <div>
+        <div class="attempts-left">attempts left</div>
+        <div class="attempts-num" id="attempts-display">10</div>
+      </div>
+      <div class="session-badge" id="session-display">0W / 0L</div>
+    </div>
+
+    <div class="input-row">
+      <input type="number" id="guess-input" min="1" max="100" placeholder="1 – 100" onkeydown="if(event.key==='Enter') submitGuess()" />
+      <button class="guess-btn" onclick="submitGuess()">Guess</button>
+    </div>
+
+    <div id="feedback"></div>
+    <div class="history" id="history"></div>
+  </div>
+
+  <div id="result-area">
+    <div class="result-title" id="result-title"></div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="accuracy-bar-wrap"><div class="accuracy-bar" id="acc-bar" style="width:0%"></div></div>
+    <div class="result-sub" id="acc-label"></div>
+    <div class="divider"></div>
+    <button class="play-again-btn" onclick="resetToSetup()">Play again</button>
+  </div>
+</div>
+
+<script>
+  const DIFFICULTIES = { "1": 10, "2": 7, "3": 5 };
+  let selectedDiff = "1";
+  let maxAttempts, secretNumber, attempts, wins = 0, losses = 0;
+
+  function selectDiff(el) {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedDiff = el.dataset.diff;
+  }
+
+  function startGame() {
+    maxAttempts = DIFFICULTIES[selectedDiff];
+    secretNumber = Math.floor(Math.random() * 100) + 1;
+    attempts = 0;
+    document.getElementById('setup-area').style.display = 'none';
+    document.getElementById('result-area').style.display = 'none';
+    document.getElementById('game-area').style.display = 'block';
+    document.getElementById('history').innerHTML = '';
+    document.getElementById('feedback').innerHTML = '';
+    document.getElementById('guess-input').value = '';
+    updateAttemptsDisplay();
+    updateSession();
+    document.getElementById('guess-input').focus();
+  }
+
+  function updateAttemptsDisplay() {
+    document.getElementById('attempts-display').textContent = maxAttempts - attempts;
+  }
+
+  function updateSession() {
+    document.getElementById('session-display').textContent = wins + 'W / ' + losses + 'L';
+  }
+
+  function submitGuess() {
+    const input = document.getElementById('guess-input');
+    const val = parseInt(input.value);
+    const fb = document.getElementById('feedback');
+
+    if (!val || val < 1 || val > 100) {
+      fb.innerHTML = '<div class="feedback-line">Enter a number between 1 and 100.</div>';
+      return;
+    }
+
+    attempts++;
+    updateAttemptsDisplay();
+
+    const diff = Math.abs(val - secretNumber);
+    const pill = document.createElement('div');
+    pill.className = 'guess-pill' + (val < secretNumber ? ' low' : val > secretNumber ? ' high' : '');
+    pill.textContent = val;
+    document.getElementById('history').appendChild(pill);
+
+    if (val === secretNumber) {
+      showResult(true);
+      return;
+    }
+
+    let lines = [];
+    if (diff <= 5) lines.push('<div class="feedback-line hot">Really close!</div>');
+    else if (diff <= 10) lines.push('<div class="feedback-line warm">Getting warmer...</div>');
+    else lines.push('<div class="feedback-line cold">Not there yet.</div>');
+
+    if (val % 2 === secretNumber % 2) lines.push('<div class="feedback-line">Same odd/even as the answer.</div>');
+    lines.push('<div class="feedback-line">' + (val < secretNumber ? 'Too low' : 'Too high') + '</div>');
+
+    fb.innerHTML = lines.join('');
+    input.value = '';
+    input.focus();
+
+    if (attempts >= maxAttempts) {
+      showResult(false);
+    }
+  }
+
+  function calcAccuracy(attempts, max) {
+    if (max === 1) return 100;
+    return Math.max(0, ((max - attempts) / (max - 1)) * 100);
+  }
+
+  function showResult(won) {
+    document.getElementById('game-area').style.display = 'none';
+    document.getElementById('result-area').style.display = 'block';
+
+    if (won) {
+      wins++;
+      const acc = calcAccuracy(attempts, maxAttempts);
+      let rating = attempts === 1 ? 'No way — first try?!' : attempts <= 3 ? "That's crazy good." : attempts <= 5 ? 'Nice one.' : 'Got there eventually lol';
+      document.getElementById('result-title').textContent = 'Correct!';
+      document.getElementById('result-sub').textContent = 'Guessed in ' + attempts + ' attempt' + (attempts !== 1 ? 's' : '') + '. ' + rating;
+      document.getElementById('acc-label').textContent = 'Accuracy: ' + acc.toFixed(1) + '%';
+      setTimeout(() => { document.getElementById('acc-bar').style.width = acc.toFixed(1) + '%'; }, 100);
+    } else {
+      losses++;
+      document.getElementById('result-title').textContent = 'Game over';
+      document.getElementById('result-sub').textContent = 'The number was ' + secretNumber + '. Better luck next time.';
+      document.getElementById('acc-label').textContent = '';
+      document.getElementById('acc-bar').style.width = '0%';
+    }
+
+    updateSession();
+  }
+
+  function resetToSetup() {
+    document.getElementById('result-area').style.display = 'none';
+    document.getElementById('setup-area').style.display = 'block';
+    updateSession();
+  }
+</script>
